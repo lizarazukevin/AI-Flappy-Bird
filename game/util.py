@@ -1,0 +1,87 @@
+"""
+File: util.py
+Description: Macros and helpful general methods (macros to be converted to json)
+Modified By: Kevin Lizarazu
+Date: 03/20/2024
+"""
+import pygame
+
+from os import listdir
+from os.path import isfile, join
+
+# Game-related macros
+WIDTH, HEIGHT = 1000, 768
+FPS = 60
+DAY, NIGHT = 0, 1
+FLOOR, PIPE_G, PIPE_R = 0, 1, 2
+
+# Map related macros
+MAP_WIDTH = 10000
+MAP_HEIGHT = HEIGHT
+START_WIDTH = WIDTH
+PIPE_INTERVAL = 300
+
+
+# Loads an obj_sprite sheet from image-holding directory
+def load_sprite(dir1, dir2=None):
+
+    # deals with single or embedded folders for sprites
+    if dir2:
+        path = join("assets", "sprites", dir1, dir2)
+    else:
+        path = join("assets", "sprites", dir1)
+
+    images = [f for f in listdir(path) if isfile(join(path, f))]
+
+    sprites = []
+    for img in images:
+        sprite = pygame.image.load(join(path, img)).convert_alpha()
+        width, height = sprite.get_width(), sprite.get_height()
+        surface = pygame.Surface((width, height), pygame.SRCALPHA, 32)
+        rect = pygame.Rect(0, 0, width, height)
+        surface.blit(sprite, (0, 0), rect)
+        sprites.append(pygame.transform.scale_by(surface, 1.5))
+
+    return sprites
+
+
+# Loads background image and positions to draw them
+def load_env_sprites():
+    sprites = load_sprite("env")
+
+    # figure out the anchor points to print these at
+    anchors_all = []
+    for i in range(len(sprites)):
+        _, _, width, height = sprites[i].get_rect()
+
+        # fill the entire window
+        anchors = []
+        for j in range((MAP_WIDTH // width) + 1):
+            pos = (j * width, 0)
+            anchors.append(pos)
+
+        anchors_all.append(anchors)
+
+    return anchors_all, sprites
+
+
+# Draws the players, images, and objects onto the world environment
+def draw(window, env, player, floor, offset_x, pipes_bot, pipes_top):
+    env.draw(window, offset_x)
+    # player.draw(window, offset_x)
+
+    for i in range(len(pipes_bot)):
+        pipes_bot[i].draw(window, offset_x)
+        pipes_top[i].draw(window, offset_x)
+
+    for f in floor:
+        f.draw(window, offset_x)
+
+    player.draw(window, offset_x)
+    pygame.display.update()
+
+# Distributes pipes all over the map
+# def distribute_pipes():
+#     anchors = []
+
+
