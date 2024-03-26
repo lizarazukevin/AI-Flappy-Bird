@@ -4,6 +4,11 @@ Description: Default game mode that uses taps to jump, no AI
 Modified By: Kevin Lizarazu
 Date: 03/20/2024
 """
+import pygame.time
+import random
+
+from collections import deque
+
 from game.player import Player
 from game.environment import *
 from game.object import *
@@ -17,23 +22,23 @@ window = pygame.display.set_mode((WIDTH, HEIGHT))
 # Populates and runs the game on a loop
 def main():
     clock = pygame.time.Clock()
-    offset_x = 0
+
+    # environment setup
+    ground_scroll = 0
+    env = Environment()
 
     # floor object created (scaled by 1.5)
     floor_w, floor_h = 504, 168
-    floor = [Floor(i * floor_w, HEIGHT - floor_h, floor_w, floor_h)
-             for i in range(MAP_WIDTH // floor_w + 1)]
+    floor = Floor(0, HEIGHT - floor_h, floor_w, floor_h)
 
     # pipe objects created (scaled by 1.5)
     pipe_w, pipe_h = 78, 480
-    pipes_bottom = [Pipe(START_WIDTH + (i * PIPE_INTERVAL), 400, pipe_w, pipe_h)
-                    for i in range((MAP_WIDTH - START_WIDTH) // (pipe_w + PIPE_INTERVAL))]
+    pipes = deque()
+    last_pipe = pygame.time.get_ticks()
+    pass_pipe = False
 
-    pipes_top = [Pipe(START_WIDTH + (i * PIPE_INTERVAL), -300, pipe_w, pipe_h, True)
-                 for i in range((MAP_WIDTH - START_WIDTH) // (pipe_w + PIPE_INTERVAL))]
-
-    player = Player(floor_w // 2, (HEIGHT - floor_h) // 2, 51, 36)
-    env = Environment()
+    # player creation
+    player = Player(WIDTH // 2 - 34, (HEIGHT - floor_h) // 2, 51, 36)
 
     mode = "START"
     run = True
@@ -50,20 +55,24 @@ def main():
 
                 # press r key to replay
                 if event.type == pygame.KEYDOWN and event.key == pygame.K_r and player.y_vel == 0:
-                    offset_x = 0
-                    player.reset(floor_w // 2, (HEIGHT - floor_h) // 2)
+                    pipes = deque()
+                    last_pipe = pygame.time.get_ticks()
+                    player.reset(WIDTH // 2 - 34, (HEIGHT - floor_h) // 2)
+                    env.score = 0
                     mode = "START"
 
-            if handle_collision(player, floor):
+            # collision with floor
+            if handle_collision(player, [floor]):
                 player.landed()
             else:
-                player.loop()
+                player.end_loop()
 
-            draw(window, env, player, floor, offset_x, pipes_bottom, pipes_top)
+            # draw(window, env, player, floor, offset_x, pipes_bottom, pipes_top, True)
+            draw(window, env, player, floor, pipes, ground_scroll, done=True)
 
             continue
 
-        # game continues condition
+        # searching for key events
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 run = False
@@ -75,24 +84,54 @@ def main():
                 if event.key == pygame.K_SPACE and mode == "ALIVE":
                     player.jump()
 
-        # remaining actions after events have been observed
+        # remaining actions for each mode
         if mode == "START":
             player.PLAYER_VEL = 3
             player.start_loop()
-        elif handle_collision(player, [*floor, *pipes_bottom, *pipes_top]):
+        elif handle_collision(player, [floor, *pipes]) or player.rect.bottom < 0:
             mode = "END"
-            player.PLAYER_VEL = 0
             player.hit_object()
         else:
+            # control scoring, increment when player passes pipe
+            if len(pipes):
+                if player.rect.left > pipes[0].rect.left \
+                        and player.rect.right < pipes[0].rect.right \
+                        and not pass_pipe:
+                    pass_pipe = True
+
+                if pass_pipe and player.rect.left > pipes[0].rect.right:
+                    env.score += 1
+                    pass_pipe = False
+
+            # generate new pipes at random heights
+            time_now = pygame.time.get_ticks()
+            if time_now - last_pipe > PIPE_FREQ:
+                pipe_height = random.randint(-80, 80)
+                pipe_u = Pipe(WIDTH, (HEIGHT // 2) + pipe_height, pipe_w, pipe_h, True)
+                pipe_d = Pipe(WIDTH, (HEIGHT // 2) + pipe_height, pipe_w, pipe_h)
+                pipes.append(pipe_u)
+                pipes.append(pipe_d)
+                last_pipe = time_now
+
+            # update player sprite
             player.loop()
 
-        draw(window, env, player, floor, offset_x, pipes_bottom, pipes_top)
+            # update and dequeue pipes if travel off the screen
+            pipe_off = False
+            for pipe in pipes:
+                if pipe.loop():
+                    pipe_off = True
+            if pipe_off:
+                pipes.popleft()
+                pipes.popleft()
 
-        # controls the camera offset, follows player
-        if (player.rect.right - offset_x >= WIDTH - floor_w) and \
-                player.x_vel > 0 and \
-                player.rect.right < MAP_WIDTH - floor_w + 10:
-            offset_x += player.x_vel
+            # control ground scrolling
+            ground_scroll -= SCROLL_SPEED
+            if abs(ground_scroll) > 35:
+                ground_scroll = 0
+
+        # draw all updated sprites
+        draw(window, env, player, floor, pipes, ground_scroll)
 
     pygame.quit()
     quit()

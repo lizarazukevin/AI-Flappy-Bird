@@ -21,8 +21,7 @@ class Player(pygame.sprite.Sprite):
         self.sprite = None
         self.GRAVITY = 0.8
         self.ANIMATION_DELAY = 5
-        self.PLAYER_VEL = 3
-        self.SPRITES = load_sprite("birds", "red")
+        self.SPRITES = load_sprite("birds", "red", scale=1.3)
 
     # Repositions player for replayability
     def reset(self, x, y):
@@ -41,10 +40,6 @@ class Player(pygame.sprite.Sprite):
         self.fall_count = 0
         self.y_vel = 0
 
-    # Sets a constant displacement for horizontal movement
-    def move_right(self, vel):
-        self.x_vel = vel
-
     # Updates the position of the player
     def move(self, dx, dy):
         self.rect.x += dx
@@ -53,16 +48,13 @@ class Player(pygame.sprite.Sprite):
     # Hit an object, player nosedives
     def hit_object(self):
         self.hit = True
-        self.sprite = pygame.transform.rotate(self.sprite, -90)
-        self.x_vel = 0
+        self.animation_count = 0
+        self.sprite = pygame.transform.rotate(self.SPRITES[1], -90)
 
     # Handles player movement given current x and y velocities
     def loop(self):
-        self.move_right(self.PLAYER_VEL)
         self.y_vel += min(1, (self.fall_count / FPS) * self.GRAVITY)
-
         self.move(self.x_vel, self.y_vel)
-
         self.fall_count += 1
         self.update_sprite()
 
@@ -70,16 +62,18 @@ class Player(pygame.sprite.Sprite):
     def start_loop(self):
         self.update_sprite()
 
+    # Bird actions after getting hit
+    def end_loop(self):
+        self.y_vel += 1
+        self.move(self.x_vel, self.y_vel)
+
     # Updates the player obj_sprite and mask depending on animation count and delay
     def update_sprite(self):
-        if self.hit:
-            return
-
         sprite_index = (self.animation_count // self.ANIMATION_DELAY) % len(self.SPRITES)
-        self.sprite = self.SPRITES[sprite_index]
+        self.sprite = pygame.transform.rotate(self.SPRITES[sprite_index], -2 * self.y_vel)
         self.mask = pygame.mask.from_surface(self.sprite)
         self.animation_count += 1
 
     # Draws player on the game window
-    def draw(self, window, offset_x):
-        window.blit(self.sprite, (self.rect.x - offset_x, self.rect.y))
+    def draw(self, window):
+        window.blit(self.sprite, (self.rect.x, self.rect.y))
