@@ -77,8 +77,9 @@ def draw(window, env, player, floor, pipes, ground_scroll, done=False):
     floor.draw(window, ground_scroll)
     player.draw(window)
 
-    if done:
-        env.draw_score(window)
+    # draws current and high score
+    env.draw_score(window, player.get_score(), WIDTH // 4, 690)
+    env.draw_score(window, env.get_highscore(), 3 * WIDTH // 4, 690)
 
     pygame.display.update()
 

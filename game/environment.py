@@ -11,16 +11,31 @@ class Environment:
     def __init__(self):
         self.bg_anchors, self.bg_images = load_env_sprites()
         self.numbers = load_sprite("numbers", scale=1.5)
-        self.score_off = [-50, 0, 50]
-        self.score = 0
+        self.highScore = 0
 
     # Draws environment elements and objects on window
     def draw(self, window):
         for anchor in self.bg_anchors[NIGHT]:
             window.blit(self.bg_images[NIGHT], (anchor[0], anchor[1]))
 
+    # Sets new high score
+    def set_highscore(self, player):
+        self.highScore = max(self.highScore, player.get_score())
+
+    # Getter for high score
+    def get_highscore(self):
+        return self.highScore
+
     # Draws current score in the environment (maybe show at the end)
-    def draw_score(self, window):
-        nums = [self.score // 100, self.score // 10 % 10, self.score % 10]
-        for i in range(len(nums)):
-            window.blit(self.numbers[nums[i]], (WIDTH // 2 + self.score_off[i] - 12, 80))
+    def draw_score(self, window, score, x, y):
+        hund, tens, ones = score // 100, score // 10 % 10, score % 10
+
+        if not hund == 0:
+            window.blit(self.numbers[hund], (x - 50 - 12, y))
+            window.blit(self.numbers[tens], (x - 12, y))
+            window.blit(self.numbers[ones], (x + 50 - 12, y))
+        elif not tens == 0:
+            window.blit(self.numbers[tens], (x - 25 - 12, y))
+            window.blit(self.numbers[ones], (x + 25 - 12, y))
+        else:
+            window.blit(self.numbers[ones], (x - 12, y))

@@ -48,6 +48,13 @@ def main():
 
         # game over condition
         if mode == "END":
+
+            # collision with floor
+            if handle_collision(player, [floor]):
+                player.landed()
+            else:
+                player.end_loop()
+
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     run = False
@@ -58,16 +65,9 @@ def main():
                     pipes = deque()
                     last_pipe = pygame.time.get_ticks()
                     player.reset(WIDTH // 2 - 34, (HEIGHT - floor_h) // 2)
-                    env.score = 0
+                    player.score = 0
                     mode = "START"
 
-            # collision with floor
-            if handle_collision(player, [floor]):
-                player.landed()
-            else:
-                player.end_loop()
-
-            # draw(window, env, player, floor, offset_x, pipes_bottom, pipes_top, True)
             draw(window, env, player, floor, pipes, ground_scroll, done=True)
 
             continue
@@ -86,10 +86,11 @@ def main():
 
         # remaining actions for each mode
         if mode == "START":
-            player.PLAYER_VEL = 3
+            last_pipe = pygame.time.get_ticks()
             player.start_loop()
         elif handle_collision(player, [floor, *pipes]) or player.rect.bottom < 0:
             mode = "END"
+            env.set_highscore(player)
             player.hit_object()
         else:
             # control scoring, increment when player passes pipe
@@ -100,7 +101,7 @@ def main():
                     pass_pipe = True
 
                 if pass_pipe and player.rect.left > pipes[0].rect.right:
-                    env.score += 1
+                    player.score += 1
                     pass_pipe = False
 
             # generate new pipes at random heights

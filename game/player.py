@@ -12,6 +12,7 @@ class Player(pygame.sprite.Sprite):
     def __init__(self, x, y, width, height):
         super().__init__()
         self.rect = pygame.Rect(x, y, width, height)
+        self.score = 0
         self.x_vel = 0
         self.y_vel = 0
         self.animation_count = 0
@@ -19,9 +20,13 @@ class Player(pygame.sprite.Sprite):
         self.hit = False
         self.mask = None
         self.sprite = None
-        self.GRAVITY = 0.8
+        self.GRAVITY = 1
         self.ANIMATION_DELAY = 5
         self.SPRITES = load_sprite("birds", "red", scale=1.3)
+
+    # Getter for player individual score
+    def get_score(self):
+        return self.score
 
     # Repositions player for replayability
     def reset(self, x, y):
@@ -32,7 +37,7 @@ class Player(pygame.sprite.Sprite):
 
     # Action for jumping, resets fall count
     def jump(self):
-        self.y_vel = -self.GRAVITY * 8
+        self.y_vel = -self.GRAVITY * 6
         self.fall_count = 0
 
     # Updates values when landing on an object
