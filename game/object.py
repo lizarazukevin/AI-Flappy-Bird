@@ -26,31 +26,31 @@ class Object(pygame.sprite.Sprite):
 
 # Constructor for a Floor object
 class Floor(Object):
-    def __init__(self, x, y, width, height):
+    def __init__(self, x, y, width, height, floor_style):
         super().__init__(x, y, width, height)
-        self.image.blit(self.obj_sprite[FLOOR], (0, 0))
+        self.image.blit(self.obj_sprite[floor_style], (0, 0))
         self.mask = pygame.mask.from_surface(self.image)
 
 
 # Constructor for a Pipe object
 class Pipe(Object):
-    def __init__(self, x, y, width, height, flip=False):
+    def __init__(self, x, y, width, height, pipe_gap, pipe_style, flip=False):
         super().__init__(x, y, width, height)
         self.flip = flip
-        self.obj_sprite = self.obj_sprite[PIPE_G]
+        self.obj_sprite = self.obj_sprite[pipe_style]
 
         if flip:
             self.obj_sprite = pygame.transform.flip(self.obj_sprite, False, True)
-            self.rect.bottomleft = [x, y - (PIPE_GAP // 2)]
+            self.rect.bottomleft = [x, y - (pipe_gap // 2)]
         else:
-            self.rect.topleft = [x, y + (PIPE_GAP // 2)]
+            self.rect.topleft = [x, y + (pipe_gap // 2)]
 
         self.image.blit(self.obj_sprite, (0, 0))
         self.mask = pygame.mask.from_surface(self.image)
 
     # Update behavior for pipes, returns True if off-screen
-    def loop(self):
-        self.rect.x -= SCROLL_SPEED
+    def loop(self, scroll_speed):
+        self.rect.x -= scroll_speed
 
         if self.rect.right < 0:
             return True

@@ -1,0 +1,36 @@
+{
+  "GRAPHICS": true,
+  "SAVE_DIR": "test.json",
+  "LOAD_DIR": "run_sessions/test.json",
+
+  "RL": {
+    "EPISODES": 10000,
+    "STEPS": 1000,
+    "LEARNING_RATE": 0.7,
+    "DISCOUNT": 0.9
+  },
+  "GAME": {
+    "WIDTH": 432,
+    "HEIGHT": 768,
+    "FPS": 60,
+    "SCROLL_SPEED": 4,
+    "ANIMATION_DELAY": 5,
+    "GRAVITY": 1,
+
+    "ENV_STYLE": 0,
+    "BIRD_STYLE": "red",
+    "BIRD_W": 51,
+    "BIRD_H": 36,
+    "FLOOR_STYLE": 0,
+    "FLOOR_W": 504,
+    "FLOOR_H": 168,
+    "PIPE_STYLE": 1,
+    "PIPE_W": 78,
+    "PIPE_H": 480,
+    "PIPE_GAP": 150,
+    "PIPE_FREQ": 1500,
+    "PIPE_INTERVAL": 300,
+    "RAND_UPPER": 90,
+    "RAND_LOWER": -200
+  }
+}

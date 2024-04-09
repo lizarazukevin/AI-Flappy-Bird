@@ -5,23 +5,11 @@ Modified By: Kevin Lizarazu
 Date: 03/20/2024
 """
 import pygame
+import json
 
 from os import listdir
 from os.path import isfile, join
-
-# Game-related macros
-WIDTH, HEIGHT = 432, 768
-FPS = 60
-DAY, NIGHT = 0, 1
-FLOOR, PIPE_G, PIPE_R = 0, 1, 2
-PIPE_GAP = 150
-PIPE_FREQ = 1500
-
-# Map related macros
-SCROLL_SPEED = 4
-MAP_HEIGHT = HEIGHT
-START_WIDTH = WIDTH
-PIPE_INTERVAL = 300
+from datetime import datetime
 
 
 # Loads an obj_sprite sheet from image-holding directory
@@ -48,7 +36,7 @@ def load_sprite(dir1, dir2=None, scale=1.0):
 
 
 # Loads background image and positions to draw them
-def load_env_sprites():
+def load_env_sprites(w_width, w_height):
     sprites = load_sprite("env", scale=1.5)
 
     # figure out the anchor points to print these at
@@ -58,7 +46,7 @@ def load_env_sprites():
 
         # fill the entire window
         anchors = []
-        for j in range((WIDTH // width) + 1):
+        for j in range((w_width // width) + 1):
             pos = (j * width, 0)
             anchors.append(pos)
 
@@ -68,18 +56,33 @@ def load_env_sprites():
 
 
 # Draws the players, images, and objects onto the world environment
-def draw(window, env, player, floor, pipes, ground_scroll, done=False):
+def draw(window, env, player, floor, pipes, ground_scroll):
     env.draw(window)
 
     for p in pipes:
         p.draw(window, p.rect.x)
 
     floor.draw(window, ground_scroll)
-    player.draw(window)
+    player.draw(window, )
 
     # draws current and high score
-    env.draw_score(window, player.get_score(), WIDTH // 4, 690)
-    env.draw_score(window, env.get_highscore(), 3 * WIDTH // 4, 690)
+    env.draw_score(window, player.get_score(), window.get_width() // 4, 690)
+    env.draw_score(window, env.get_highscore(), 3 * window.get_width() // 4, 690)
 
     pygame.display.update()
 
+
+# Loads information about JSON file here
+def load_json(filename):
+    with open(filename) as f:
+        data = json.load(f)
+
+    return data
+
+
+# Saves dictionary object to JSON format
+def save_json(play_record, filename=None):
+    if not filename:
+        filename = datetime.now().strftime("%Y%m%d%H%M%S.json")
+    with open("run_sessions/" + filename, "w") as f:
+        json.dump(play_record, f)

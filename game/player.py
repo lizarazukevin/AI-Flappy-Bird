@@ -9,7 +9,7 @@ from game.util import *
 
 class Player(pygame.sprite.Sprite):
 
-    def __init__(self, x, y, width, height):
+    def __init__(self, x, y, width, height, bird_style, animation_delay):
         super().__init__()
         self.rect = pygame.Rect(x, y, width, height)
         self.score = 0
@@ -20,9 +20,8 @@ class Player(pygame.sprite.Sprite):
         self.hit = False
         self.mask = None
         self.sprite = None
-        self.GRAVITY = 1
-        self.ANIMATION_DELAY = 5
-        self.SPRITES = load_sprite("birds", "red", scale=1.3)
+        self.sprites = load_sprite("birds", bird_style, scale=1.3)
+        self.animation_delay = animation_delay
 
     # Getter for player individual score
     def get_score(self):
@@ -36,8 +35,8 @@ class Player(pygame.sprite.Sprite):
         self.hit = False
 
     # Action for jumping, resets fall count
-    def jump(self):
-        self.y_vel = -self.GRAVITY * 6
+    def jump(self, gravity):
+        self.y_vel = -gravity * 6
         self.fall_count = 0
 
     # Updates values when landing on an object
@@ -54,11 +53,11 @@ class Player(pygame.sprite.Sprite):
     def hit_object(self):
         self.hit = True
         self.animation_count = 0
-        self.sprite = pygame.transform.rotate(self.SPRITES[1], -90)
+        self.sprite = pygame.transform.rotate(self.sprites[1], -90)
 
     # Handles player movement given current x and y velocities
-    def loop(self):
-        self.y_vel += min(1, (self.fall_count / FPS) * self.GRAVITY)
+    def loop(self, fps, gravity):
+        self.y_vel += min(1, (self.fall_count / fps) * gravity)
         self.move(self.x_vel, self.y_vel)
         self.fall_count += 1
         self.update_sprite()
@@ -74,8 +73,8 @@ class Player(pygame.sprite.Sprite):
 
     # Updates the player obj_sprite and mask depending on animation count and delay
     def update_sprite(self):
-        sprite_index = (self.animation_count // self.ANIMATION_DELAY) % len(self.SPRITES)
-        self.sprite = pygame.transform.rotate(self.SPRITES[sprite_index], -2 * self.y_vel)
+        sprite_index = (self.animation_count // self.animation_delay) % len(self.sprites)
+        self.sprite = pygame.transform.rotate(self.sprites[sprite_index], -2 * self.y_vel)
         self.mask = pygame.mask.from_surface(self.sprite)
         self.animation_count += 1
 

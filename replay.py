@@ -1,6 +1,6 @@
 """
-File: manualGame.py
-Description: Default game mode that uses taps to jump, no AI
+File: replay.py
+Description: Replays a previous game session from JSON file
 Modified By: Kevin Lizarazu
 Date: 03/20/2024
 """
@@ -8,7 +8,6 @@ import pygame.time
 import random
 
 from collections import deque
-from datetime import datetime
 
 from game.player import Player
 from game.environment import *
@@ -46,7 +45,7 @@ pygame.display.set_caption("AI Flappy Bird")
 window = pygame.display.set_mode((WIDTH, HEIGHT))
 
 
-# Handles game objects and environment changes
+# Handles the replay of recorded game sessions
 def main():
     # clock object to control ticks to maintain FPS
     clock = pygame.time.Clock()
@@ -66,85 +65,72 @@ def main():
     # player creation
     player = Player(WIDTH // 2 - 34, (HEIGHT - FLOOR_H) // 2, BIRD_W, BIRD_H, BIRD_STYLE, ANIMATION_DELAY)
 
-    # record of entire session
-    play_record = {"run_inputs": [], "run_scores": [], "run_time": [], "random_seed": datetime.now().timestamp(),
-                   "total_runs": 0, "FPS": FPS}
-    random.seed(play_record["random_seed"])
-    fps_counter = 0
-    inputs = []
+    # load desired session
+    data = load_json(conf["LOAD_DIR"])
+    random.seed(data["random_seed"])
+    total_runs = data["total_runs"]
 
     # runs the loop in state-machine fashion
+    curr_run = -1
+    fps_counter = 0
+    input_counter = 0
+    total_inputs = 0
+    total_run_fps = 0
     mode = "START"
     run = True
 
     while run:
         # maintains game running at specified FPS
-        clock.tick(FPS)
+        clock.tick(data["FPS"])
 
-        # game over condition
-        if mode == "END":
-            # handles aftereffects of collision
-            if handle_collision(player, [floor]):
-                player.landed()
-            else:
-                player.end_loop()
-
-            # searches for input to restart the game
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    run = False
-                    break
-
-                # press r key to replay
-                if event.type == pygame.KEYDOWN and event.key == pygame.K_r and player.y_vel == 0:
-                    inputs = []
-                    pipes = deque()
-                    last_pipe = pygame.time.get_ticks()
-                    player.reset(WIDTH // 2 - 34, (HEIGHT - FLOOR_H) // 2)
-                    player.score = 0
-                    mode = "START"
-
-            # updates sprites
-            draw(window, env, player, floor, pipes, ground_scroll)
-            continue
-
-        # searching for user input events while game is still active
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 run = False
                 break
 
-            if event.type == pygame.KEYDOWN:
-                # starts game to active
-                if mode == "START":
-                    mode = "ALIVE"
-                    fps_counter = 0
-                # space key is pressed for jump, records frame and action
-                if event.key == pygame.K_SPACE and mode == "ALIVE":
-                    player.jump(GRAVITY)
-                    inputs.append(("jump", fps_counter))
+            # searches for events, left click begins playing run of the session
+            # runs can be skipped by simply clicking
+            if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                # only replays if current run does not exceed total runs
+                if curr_run < total_runs - 1:
+                    curr_run += 1
+                else:
+                    run = False
+                    break
+
+                total_inputs = len(data["run_inputs"][curr_run])
+                total_run_fps = data["run_time"][curr_run]
+                fps_counter = 0
+                input_counter = 0
+
+                pipes = deque()
+                last_pipe = pygame.time.get_ticks()
+                pass_pipe = False
+
+                player.reset(WIDTH // 2 - 34, (HEIGHT - FLOOR_H) // 2)
+                player.score = 0
+
+                mode = "ALIVE"
 
         # simple start loop iterates through player sprite animation
         if mode == "START":
             last_pipe = pygame.time.get_ticks()
             player.start_loop()
-        # identifies collisions with floor/pipe objects or if off-screen, ends run
-        elif handle_collision(player, [floor, *pipes]) or player.rect.bottom < 0:
-            mode = "END"
-            env.set_highscore(player)
-            player.hit_object()
-            play_record["run_inputs"].append(inputs)
-            play_record["run_time"].append(fps_counter)
-            play_record["run_scores"].append(player.get_score())
-            play_record["total_runs"] += 1
-        # active game, no collisions, must update all sprites
         else:
-            # when pipes exist, controls scoring based on if player passes through
+            # searches for next input in relation to recorded time frame
+            if input_counter < total_inputs:
+                action, at_fps = data["run_inputs"][curr_run][input_counter]
+                if fps_counter == at_fps:
+                    player.jump(GRAVITY)
+                    input_counter += 1
+
+            # control scoring, increment when player passes pipe
             if len(pipes):
                 if player.rect.left > pipes[0].rect.left \
                         and player.rect.right < pipes[0].rect.right \
                         and not pass_pipe:
                     pass_pipe = True
+
                 if pass_pipe and player.rect.left > pipes[0].rect.right:
                     player.score += 1
                     pass_pipe = False
@@ -176,14 +162,21 @@ def main():
             if abs(ground_scroll) > 35:
                 ground_scroll = 0
 
+            # only increase if still alive
+            if fps_counter < total_run_fps:
+                fps_counter += 1
+            else:
+                mode = "START"
+                env.set_highscore(player)
+
         # draw all updated sprites
         draw(window, env, player, floor, pipes, ground_scroll)
-        fps_counter += 1
 
-    save_json(play_record, conf["SAVE_DIR"])
+    print("Finished Replay!")
     pygame.quit()
     quit()
 
 
 if __name__ == "__main__":
+    print("Welcome to the Flappy Bird Replay Station!")
     main()
