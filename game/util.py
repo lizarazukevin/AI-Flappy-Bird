@@ -39,37 +39,14 @@ def load_sprite(dir1, dir2=None, scale=1.0):
 def load_env_sprites(w_width, w_height):
     sprites = load_sprite("env", scale=1.5)
 
-    # figure out the anchor points to print these at
-    anchors_all = []
-    for i in range(len(sprites)):
-        _, _, width, height = sprites[i].get_rect()
+    anchors = []
+    _, _, width, height = sprites[0].get_rect()
+    for i in range((w_width // width) + 1):
+        pos = (i * width, 0)
+        anchors.append(pos)
 
-        # fill the entire window
-        anchors = []
-        for j in range((w_width // width) + 1):
-            pos = (j * width, 0)
-            anchors.append(pos)
+    return anchors, sprites
 
-        anchors_all.append(anchors)
-
-    return anchors_all, sprites
-
-
-# Draws the players, images, and objects onto the world environment
-def draw(window, env, player, floor, pipes, ground_scroll):
-    env.draw(window)
-
-    for p in pipes:
-        p.draw(window, p.rect.x)
-
-    floor.draw(window, ground_scroll)
-    player.draw(window, )
-
-    # draws current and high score
-    env.draw_score(window, player.get_score(), window.get_width() // 4, 690)
-    env.draw_score(window, env.get_highscore(), 3 * window.get_width() // 4, 690)
-
-    pygame.display.update()
 
 
 # Loads information about JSON file here

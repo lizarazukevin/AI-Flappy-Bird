@@ -5,9 +5,11 @@
 
   "RL": {
     "EPISODES": 10000,
-    "STEPS": 1000,
-    "LEARNING_RATE": 0.7,
-    "DISCOUNT": 0.9
+    "LEARNING_RATE": 0.003,
+    "GAMMA": 0.7,
+    "EPSILON": 0,
+    "MAX_MEMORY": 100000,
+    "BATCH_SIZE": 1000
   },
   "GAME": {
     "WIDTH": 432,
@@ -17,19 +19,17 @@
     "ANIMATION_DELAY": 5,
     "GRAVITY": 1,
 
-    "ENV_STYLE": 0,
+    "ENV_STYLE": "night",
     "BIRD_STYLE": "red",
     "BIRD_W": 51,
     "BIRD_H": 36,
     "FLOOR_STYLE": 0,
     "FLOOR_W": 504,
     "FLOOR_H": 168,
-    "PIPE_STYLE": 1,
+    "PIPE_COLOR": "green",
     "PIPE_W": 78,
     "PIPE_H": 480,
     "PIPE_GAP": 150,
-    "PIPE_FREQ": 1500,
-    "PIPE_INTERVAL": 300,
     "RAND_UPPER": 90,
     "RAND_LOWER": -200
   }

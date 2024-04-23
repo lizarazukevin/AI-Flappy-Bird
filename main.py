@@ -8,7 +8,7 @@ Date: 03/20/2024
 import os, sys
 import argparse
 
-from game import manualGame
+from game import manualGame, agent
 
 # Load in desired paths
 sys.path.append('.')
@@ -29,7 +29,13 @@ def parse_args():
 
 def main():
     print("Welcome to AI Flappy Bird!")
-    manualGame.main()
+
+    args = parse_args()
+
+    if args.mode == 'dqn':
+        agent.train()
+    else:
+        manualGame.main()
 
 
 if __name__ == "__main__":

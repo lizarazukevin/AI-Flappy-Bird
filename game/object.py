@@ -6,7 +6,7 @@ Date: 03/20/2024
 """
 import pygame.sprite
 
-from game.util import *
+from game.util import load_sprite
 
 
 # General class for objects
@@ -15,7 +15,7 @@ class Object(pygame.sprite.Sprite):
         super().__init__()
         self.rect = pygame.Rect(x, y, width, height)
         self.image = pygame.Surface((width, height), pygame.SRCALPHA)
-        self.obj_sprite = load_sprite("objects", scale=1.5)
+        self.floor_sprite, self.green_sprite, self.red_sprite = load_sprite("objects", scale=1.5)
         self.width = width
         self.height = height
         self.name = name
@@ -26,9 +26,9 @@ class Object(pygame.sprite.Sprite):
 
 # Constructor for a Floor object
 class Floor(Object):
-    def __init__(self, x, y, width, height, floor_style):
+    def __init__(self, x, y, width, height):
         super().__init__(x, y, width, height)
-        self.image.blit(self.obj_sprite[floor_style], (0, 0))
+        self.image.blit(self.floor_sprite, (0, 0))
         self.mask = pygame.mask.from_surface(self.image)
 
 
@@ -37,15 +37,18 @@ class Pipe(Object):
     def __init__(self, x, y, width, height, pipe_gap, pipe_style, flip=False):
         super().__init__(x, y, width, height)
         self.flip = flip
-        self.obj_sprite = self.obj_sprite[pipe_style]
+
+        self.pipe_sprite = self.green_sprite
+        if pipe_style == "red":
+            self.pipe_sprite = self.red_sprite
 
         if flip:
-            self.obj_sprite = pygame.transform.flip(self.obj_sprite, False, True)
+            self.pipe_sprite = pygame.transform.flip(self.pipe_sprite, False, True)
             self.rect.bottomleft = [x, y - (pipe_gap // 2)]
         else:
             self.rect.topleft = [x, y + (pipe_gap // 2)]
 
-        self.image.blit(self.obj_sprite, (0, 0))
+        self.image.blit(self.pipe_sprite, (0, 0))
         self.mask = pygame.mask.from_surface(self.image)
 
     # Update behavior for pipes, returns True if off-screen

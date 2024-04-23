@@ -4,7 +4,9 @@ Description: Holds various properties for the player object
 Modified By: Kevin Lizarazu
 Date: 03/20/2024
 """
-from game.util import *
+import pygame
+
+from game.util import load_sprite
 
 
 class Player(pygame.sprite.Sprite):
@@ -19,8 +21,8 @@ class Player(pygame.sprite.Sprite):
         self.fall_count = 0
         self.hit = False
         self.mask = None
-        self.sprite = None
         self.sprites = load_sprite("birds", bird_style, scale=1.3)
+        self.sprite = self.sprites[0]
         self.animation_delay = animation_delay
 
     # Getter for player individual score
@@ -31,8 +33,10 @@ class Player(pygame.sprite.Sprite):
     def reset(self, x, y):
         self.rect.x = x
         self.rect.y = y
+        self.y_vel = 0
         self.sprite = pygame.transform.rotate(self.sprite, 90)
         self.hit = False
+        self.score = 0
 
     # Action for jumping, resets fall count
     def jump(self, gravity):
