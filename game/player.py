@@ -14,7 +14,6 @@ class Player(pygame.sprite.Sprite):
     def __init__(self, x, y, width, height, bird_style, animation_delay):
         super().__init__()
         self.rect = pygame.Rect(x, y, width, height)
-        self.score = 0
         self.x_vel = 0
         self.y_vel = 0
         self.animation_count = 0
@@ -24,10 +23,6 @@ class Player(pygame.sprite.Sprite):
         self.sprites = load_sprite("birds", bird_style, scale=1.3)
         self.sprite = self.sprites[0]
         self.animation_delay = animation_delay
-
-    # Getter for player individual score
-    def get_score(self):
-        return self.score
 
     # Repositions player for replayability
     def reset(self, x, y):
@@ -60,8 +55,8 @@ class Player(pygame.sprite.Sprite):
         self.sprite = pygame.transform.rotate(self.sprites[1], -90)
 
     # Handles player movement given current x and y velocities
-    def loop(self, fps, gravity):
-        self.y_vel += min(1, (self.fall_count / fps) * gravity)
+    def loop(self, gravity):
+        self.y_vel += min(1, (self.fall_count / 60) * gravity)
         self.move(self.x_vel, self.y_vel)
         self.fall_count += 1
         self.update_sprite()
@@ -81,7 +76,3 @@ class Player(pygame.sprite.Sprite):
         self.sprite = pygame.transform.rotate(self.sprites[sprite_index], -2 * self.y_vel)
         self.mask = pygame.mask.from_surface(self.sprite)
         self.animation_count += 1
-
-    # Draws player on the game window
-    def draw(self, window):
-        window.blit(self.sprite, (self.rect.x, self.rect.y))

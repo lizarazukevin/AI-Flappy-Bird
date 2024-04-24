@@ -164,7 +164,7 @@ class FlappyGameDQN():
                 self.player.end_loop()
             return
         else:
-            self.player.loop(self.fps, self.gravity)
+            self.player.loop(self.gravity)
 
         # pipe updates --> generation and removal
         time_now = pygame.time.get_ticks()
@@ -192,7 +192,7 @@ class FlappyGameDQN():
 
 # Game environment for manual gameplay
 class FlappyGame():
-    def __init__(self, window_dims, floor_dims, bird_dims, pipe_dims, rand_dims, env_style, bird_style, animation_delay, scroll_speed, gravity, fps):
+    def __init__(self, window_dims, floor_dims, bird_dims, pipe_dims, rand_dims, env_style, bird_style, animation_delay, scroll_speed, gravity, fps, replay=False):
         self.w, self.h = window_dims
         self.floor_w, self.floor_h = floor_dims
         self.bird_w, self.bird_h = bird_dims
@@ -203,6 +203,7 @@ class FlappyGame():
         self.gravity = gravity
         self.fps = fps
         self.mode = "START"
+        self.replay = replay
 
         # based off of pipe spacing at 60 fps
         self.pipe_freq = (1500 * 60) / self.fps
@@ -227,7 +228,7 @@ class FlappyGame():
         self.last_pipe = pygame.time.get_ticks()
 
     # At every frame an action is taken, resulting in reward, done, score
-    def play_step(self, action=[0, 0], replay=False):
+    def play_step(self, action=[0, 0]):
         action = list(action)
 
         # key events searched every play step
@@ -237,7 +238,7 @@ class FlappyGame():
                 done = -1
                 return action, self.fps_counter, self.score, done
             
-            if event.type == pygame.KEYDOWN:
+            if not self.replay and event.type == pygame.KEYDOWN:
                 if self.mode == "START":
                     self.mode = "ALIVE"
                     self.last_pipe = pygame.time.get_ticks()
@@ -246,12 +247,15 @@ class FlappyGame():
                 if event.key == pygame.K_r and self.mode == "END":
                     self.mode = "START"
                     self.reset()
-        
+
         # update player and object sprites
         self._update(action)
 
+        # only record the frames that bird is alive
+        if self.mode == "ALIVE":
+            self.fps_counter += 1
+
         # render each frame
-        self.fps_counter += 1
         self.clock.tick(self.fps)
         self._render()
 
@@ -272,7 +276,7 @@ class FlappyGame():
                 self.pass_pipe = False
                 self.score += 1
 
-        return action, self.fps_counter, self.score, done
+        return action, self.fps_counter - 1, self.score, done
 
     # Handles collisions in the environment
     def is_collision(self):
@@ -306,7 +310,7 @@ class FlappyGame():
     # Updates positions of all sprites
     def _update(self, action):
         # start game animation
-        if self.mode == "START":
+        if self.mode == "START" and not self.replay:
             self.player.start_loop()
             return
 
@@ -322,7 +326,7 @@ class FlappyGame():
                 self.player.end_loop()
             return
         else:
-            self.player.loop(self.fps, self.gravity)
+            self.player.loop(self.gravity)
 
         # pipe updates --> generation and removal
         time_now = pygame.time.get_ticks()

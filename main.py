@@ -8,7 +8,7 @@ Date: 03/20/2024
 import os, sys
 import argparse
 
-from game import manualGame, agent
+from game import manualGame, agent, replay
 
 # Load in desired paths
 sys.path.append('.')
@@ -34,6 +34,8 @@ def main():
 
     if args.mode == 'dqn':
         agent.train()
+    elif args.mode == 'replay':
+        replay.main()
     else:
         manualGame.main()
 
