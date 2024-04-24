@@ -20,9 +20,6 @@ class Object(pygame.sprite.Sprite):
         self.height = height
         self.name = name
 
-    def draw(self, window, dx):
-        window.blit(self.image, (dx, self.rect.y))
-
 
 # Constructor for a Floor object
 class Floor(Object):
@@ -30,7 +27,14 @@ class Floor(Object):
         super().__init__(x, y, width, height)
         self.image.blit(self.floor_sprite, (0, 0))
         self.mask = pygame.mask.from_surface(self.image)
+    
+    # Slightly moves ground to mimic infinite ground
+    def loop(self, scroll_speed):
+        self.rect.x -= scroll_speed
 
+        if abs(self.rect.x) > .07 * self.width:
+            self.rect.x = 0
+            
 
 # Constructor for a Pipe object
 class Pipe(Object):
@@ -58,23 +62,3 @@ class Pipe(Object):
         if self.rect.right < 0:
             return True
         return False
-
-
-# Returns the exact object player collides with
-def handle_collision(player, objects):
-    # find collisions
-    floor = False
-    collided_objects = []
-    for obj in objects:
-        if pygame.sprite.collide_mask(player, obj):
-            collided_objects.append(obj)
-
-            if type(obj) == Floor:
-                floor = True
-
-    # in collisions find if it hit the floor
-    if floor:
-        player.landed()
-        return True
-
-    return collided_objects

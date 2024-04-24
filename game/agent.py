@@ -93,7 +93,7 @@ class DQNAgent():
         
         # unpacks and packages into lists for model update
         state, action, rew, next_state, done = zip(*mem_sample)
-        self.trainer.train_step(state, action, rew, next_state, done)
+        self.trainer.train_step(np.array(state), np.array(action), np.array(rew), np.array(next_state), np.array(done))
 
     # Updates the model trained every step
     def train_short_mem(self, state, action, rew, next_state, done):

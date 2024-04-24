@@ -6,12 +6,11 @@ Date: 03/20/2024
 """
 import random
 import numpy as np
-import pygame
 
 from datetime import datetime
 
 from game.util import load_json, save_json
-from game.game import FlappyGame
+from game.game import ManualGame
 
 # load JSON variables
 conf = load_json("config.json")
@@ -39,7 +38,7 @@ RAND_LOWER = conf["GAME"]["RAND_LOWER"]
 
 def main():
     # game env created
-    game = FlappyGame (
+    game = ManualGame(
         (WIDTH, HEIGHT),
         (FLOOR_W, FLOOR_H),
         (BIRD_W, BIRD_H),
