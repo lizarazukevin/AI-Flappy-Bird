@@ -53,29 +53,29 @@ class DQNAgent():
         self.gamma = GAMMA
         self.lr = LEARNING_RATE
         self.memory = deque(maxlen=MAX_MEMORY)
-        self.model = LinearDQN(6, 256, 2)
+        self.model = LinearDQN(8, 256, 2)
         self.trainer = QTrainer(self.model, self.lr, self.gamma)
     
     # Retrieves current state of observations
-    # [pipe_bot (bool), pipe_top (bool), pipe_mid (int), dist_to_pipe (int), dist_to_ceiling (int), dist_to_floor (int)]
+    # [player y-position, player y-velocity,
+    #  dist to pipe, bot pipe y-position, top pipe y-position,
+    #  dist to next pipe, next bot pipe y-position, next top pipe y-position]
     def get_state(self, game):
-        state = [-1, -1, -1, -1, -1, -1]
+        state = [-1, -1, WIDTH, HEIGHT//2, HEIGHT//2, WIDTH, HEIGHT//2, HEIGHT//2]
+
+        # player stuff
+        state[0] = game.player.rect.y
+        state[1] = game.player.y_vel
 
         # pipe stuff
         if len(game.pipes) == 2:
-            state[0] = True if game.player.rect.bottom < game.pipes[0].rect.top else False
-            state[1] = True if game.player.rect.top > game.pipes[1].rect.bottom else False
-            state[2] = abs((game.player.rect.top + (BIRD_H // 2)) - (game.pipes[0].rect.top - (PIPE_GAP // 2)))
-            state[3] = game.pipes[0].rect.right - game.player.rect.left
-        elif len(game.pipes) == 4:
-            state[0] = True if game.player.rect.bottom < game.pipes[2].rect.top else False
-            state[1] = True if game.player.rect.top > game.pipes[3].rect.bottom else False
-            state[2] = abs((game.player.rect.top + (BIRD_H // 2)) - (game.pipes[2].rect.top - (PIPE_GAP // 2)))
-            state[3] = game.pipes[2].rect.right - game.player.rect.left
-
-        # floor/ceiling
-        state[4] = abs(game.player.rect.bottom)
-        state[5] = abs(game.h - game.floor_h - game.player.rect.top)
+            state[2] = game.pipes[0].rect.x - game.player.rect.x
+            state[3] = game.pipes[0].rect.y
+            state[4] = game.pipes[1].rect.bottom
+        if len(game.pipes) == 4:
+            state[5] = game.pipes[2].rect.x - game.player.rect.x
+            state[6] = game.pipes[2].rect.y
+            state[7] = game.pipes[3].rect.bottom
 
         return np.array(state, dtype=int)
 

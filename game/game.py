@@ -127,20 +127,20 @@ class FlappyGameDQN(BaseGame):
         self._render()
 
         # determine score and rewards
-        # living reward -> -1
-        # crash reward -> -1000
-        # pass pipe reward -> 10
-        rew, done = -1, False
+        # living reward -> 0
+        # crash reward -> -1
+        # pass pipe reward -> 1
+        rew, done = 0, False
         if self.is_collision():
             self.player.hit_object()
             done = True
-            rew -= 200
+            rew -= 1
             # print(f"At frame {self.fps_counter}, Reward: {rew}")
             return rew, done, self.score
 
         # increaase living reward if too close to floor/ceiling -> [-100, -1]
-        rew -= 100 / math.exp(self.player.rect.bottom)
-        rew -= 100 / math.exp(self.h - self.floor_h - self.player.rect.top)
+        # rew -= 100 / math.exp(self.player.rect.bottom)
+        # rew -= 100 / math.exp(self.h - self.floor_h - self.player.rect.top)
 
         if len(self.pipes):
             if self.player.rect.left > self.pipes[0].rect.left \
@@ -150,14 +150,14 @@ class FlappyGameDQN(BaseGame):
             if self.pass_pipe and self.player.rect.left > self.pipes[0].rect.right:
                 self.pass_pipe = False
                 self.score += 1
-                rew += 10
+                rew += 1
             
             # lessen reward closer to pipe -> [-1, 0]
-            if len(self.pipes) == 2:
-                # print("pipes present")
-                rew += (1 / (1 + math.exp((self.pipes[0].rect.right - self.player.rect.left - 200) / 36)))
-            elif len(self.pipes) == 4:
-                rew += (1 / (1 + math.exp((self.pipes[2].rect.right - self.player.rect.left - 200) / 36)))
+            # if len(self.pipes) == 2:
+            #     # print("pipes present")
+            #     rew += (1 / (1 + math.exp((self.pipes[0].rect.right - self.player.rect.left - 200) / 36)))
+            # elif len(self.pipes) == 4:
+            #     rew += (1 / (1 + math.exp((self.pipes[2].rect.right - self.player.rect.left - 200) / 36)))
         
         # print(f"At frame {self.fps_counter}, Reward: {rew}")
         return rew, done, self.score
