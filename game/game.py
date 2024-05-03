@@ -66,6 +66,7 @@ class BaseGame:
         self.pipes = deque()
         self.pass_pipe = False
         self.last_pipe = pygame.time.get_ticks()
+        
     
     # At every frame an action is taken, resulting in reward, done, score
     def play_step(self, action):
@@ -86,6 +87,7 @@ class BaseGame:
     
     # Draws to window the background, floor, pipes, and player
     def _render(self):
+        
         for anchor in self.bg_anchors:
             self.window.blit(self.bg_sprites[BG_STYLE[self.env_style]], anchor)
 
@@ -269,6 +271,203 @@ class ManualGame(BaseGame):
 
         # action is jump, else do nothing 
         if np.array_equal(action, [1, 0]) and not self.player.hit:
+            self.player.jump(self.gravity)
+        
+        # determines which sprite update loop for player
+        if self.player.hit:
+            if self.player.rect.bottom > self.h - self.floor_h:
+                self.player.landed()
+            else:
+                self.player.end_loop()
+            return
+        else:
+            self.player.loop(self.gravity)
+
+        # pipe updates --> generation and removal
+        time_now = pygame.time.get_ticks()
+        if time_now - self.last_pipe > self.pipe_freq:
+            pipe_y = random.randint(self.rand_lower, self.rand_upper)
+            pipe_u = Pipe(self.w, (self.h // 2) + pipe_y, self.pipe_w, self.pipe_h, self.pipe_gap, PIPE_STYLE[self.pipe_color], True)
+            pipe_d = Pipe(self.w, (self.h // 2) + pipe_y, self.pipe_w, self.pipe_h, self.pipe_gap, PIPE_STYLE[self.pipe_color])
+            self.pipes += [pipe_d, pipe_u]
+            self.last_pipe = time_now
+
+        pipe_off = False
+        for pipe in self.pipes:
+            if pipe.loop(self.scroll_speed):
+                pipe_off = True
+                break
+        
+        if pipe_off:
+            self.pipes.popleft()
+            self.pipes.popleft()
+
+        # handle ground scroll
+        self.floor.loop(self.scroll_speed)
+        
+        
+        # Game environment used for SARSA training
+class FlappyGameSARSA(BaseGame):
+    def __init__(self, window_dims, floor_dims, bird_dims, pipe_dims, rand_dims, env_style, bird_style, animation_delay, scroll_speed, gravity, fps):
+        super().__init__(window_dims, floor_dims, bird_dims, pipe_dims, rand_dims, env_style, bird_style, animation_delay, scroll_speed, gravity, fps)
+        
+    # At every frame an action is taken, resulting in reward, done, score
+    # def play_step(self, action):
+    #     for event in pygame.event.get():
+    #         if event.type == pygame.QUIT:
+    #             pygame.quit()
+    #             quit()
+        
+    #     # update player and object sprites
+    #     self._update(action)
+
+    #     # render each frame
+    #     self.fps_counter += 1
+    #     # print(f"At frame {self.fps_counter}, height is: {self.player.rect.top} and {'DEAD' if self.player.hit else 'ALIVE'}")
+    #     self.clock.tick(self.fps)
+    #     self._render()
+
+    #     # determine score and rewards
+    #     # living reward -> -1
+    #     # crash reward -> -1000
+    #     # pass pipe reward -> 10
+    #     rew, done = -1, False
+    #     if self.is_collision():
+    #         self.player.hit_object()
+    #         done = True
+    #         rew -= 200
+    #         # print(f"At frame {self.fps_counter}, Reward: {rew}")
+    #         return rew, done, self.score
+
+    #     # increaase living reward if too close to floor/ceiling -> [-100, -1]
+    #     rew -= 100 / math.exp(self.player.rect.bottom)
+    #     rew -= 100 / math.exp(self.h - self.floor_h - self.player.rect.top)
+
+    #     if len(self.pipes):
+    #         if self.player.rect.left > self.pipes[0].rect.left \
+    #             and self.player.rect.right < self.pipes[0].rect.right \
+    #             and not self.pass_pipe:
+    #             self.pass_pipe = True
+    #         if self.pass_pipe and self.player.rect.left > self.pipes[0].rect.right:
+    #             self.pass_pipe = False
+    #             self.score += 1
+    #             rew += 10
+            
+    #         # lessen reward closer to pipe -> [-1, 0]
+    #         if len(self.pipes) == 2:
+    #             # print("pipes present")
+    #             rew += (1 / (1 + math.exp((self.pipes[0].rect.right - self.player.rect.left - 200) / 36)))
+    #         elif len(self.pipes) == 4:
+    #             rew += (1 / (1 + math.exp((self.pipes[2].rect.right - self.player.rect.left - 200) / 36)))
+        
+    #     # print(f"At frame {self.fps_counter}, Reward: {rew}")
+    #     return rew, done, self.score
+    
+        # Resets game environment
+        
+    def _get_observation(self):
+        # if len(self.pipes) == 0:
+        #     return np.array([0, 0, 0,0])  # no pipes on screen
+
+        horizontal_dist =-999
+        vertical_dist=-999
+        if len(self.pipes) == 2:
+            
+            next_pipe_top = self.pipes[0]
+            next_pipe_bottom = self.pipes[1]
+            if (next_pipe_top.rect.centery < next_pipe_bottom.rect.centery):
+                next_pipe_top = self.pipes[1]
+                next_pipe_bottom = self.pipes[0]
+                
+            # Get the next pipe on the screen
+            # Calculate distances
+            horizontal_dist = next_pipe_top.rect.left - self.player.rect.right
+            vertical_dist = self.player.rect.centery - ((next_pipe_top.rect.bottom + next_pipe_bottom.rect.top) / 2)
+            
+        elif len(self.pipes) == 4:
+            
+            next_pipe_top = self.pipes[2]
+            next_pipe_bottom = self.pipes[3]
+            if (next_pipe_top.rect.centery < next_pipe_bottom.rect.centery):
+                next_pipe_top = self.pipes[2]
+                next_pipe_bottom = self.pipes[3]
+                
+            # Get the next pipe on the screen
+            # Calculate distances
+            horizontal_dist = next_pipe_top.rect.left - self.player.rect.right
+            vertical_dist = self.player.rect.centery - ((next_pipe_top.rect.bottom + next_pipe_bottom.rect.top) / 2)
+
+
+        # Player's vertical velocity
+        player_vel_y = self.player.y_vel
+        player_y = self.player.rect.y
+        
+        return np.array([horizontal_dist, vertical_dist, player_vel_y, player_y])
+        # return np.array([1, 1, 1, 1])
+
+    def reset(self):
+        self.player.reset(self.w // 2 - 34, (self.h - self.floor_h) // 2)
+        self.score = 0
+        self.fps_counter = 0
+        self.pipes = deque()
+        self.pass_pipe = False
+        self.last_pipe = pygame.time.get_ticks()
+        
+        return self._get_observation() 
+    
+    def play_step(self, action):
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                quit()
+        
+        # update player and object sprites
+        self._update(action)
+
+        # render each frame
+        self.fps_counter += 1
+        self.clock.tick(self.fps)
+        # self._render()
+
+        # Get the current observation
+        observation = self._get_observation()
+
+        # Base reward for surviving each frame
+        survival_reward = 1
+        rew = survival_reward  # start each frame with a survival reward
+        
+        # check for collisions
+        done = False
+        if self.is_collision():
+            self.player.hit_object()
+            done = True
+            crash_reward = -1000  # Large penalty for crashing
+            rew += crash_reward  # Add the crash penalty to the frame's reward
+            return observation, rew, done, self.score
+
+        self.score += rew
+        # Rewards for passing pipes and staying alive
+        if len(self.pipes):
+            if self.player.rect.left > self.pipes[0].rect.left \
+            and self.player.rect.right < self.pipes[0].rect.right \
+            and not self.pass_pipe:
+                self.pass_pipe = True
+            if self.pass_pipe and self.player.rect.left > self.pipes[0].rect.right:
+                self.pass_pipe = False
+                self.score += 1
+                rew += 10 # reward for passing a pipe
+                
+                
+        
+        return observation, rew, done, self.score
+
+    # Updates positions of all sprites
+    def _update(self, action):
+        # action is jump, else do nothing 
+        # if np.array_equal(action, [1, 0]) and not self.player.hit:
+        #     print("jump")
+        #     self.player.jump(self.gravity)
+        if action == 1 and not self.player.hit:
             self.player.jump(self.gravity)
         
         # determines which sprite update loop for player

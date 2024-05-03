@@ -78,6 +78,8 @@ class DQNAgent():
         state[5] = abs(game.h - game.floor_h - game.player.rect.top)
 
         return np.array(state, dtype=int)
+    
+
 
     # Past state information saved for future reference
     def remember(self, state, action, rew, next_state, done):
@@ -136,7 +138,7 @@ def train():
         GRAVITY, 
         FPS
     )
-
+    
     # training loop
     while True:
         # get current state and take single game step with action
