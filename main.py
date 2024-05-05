@@ -9,6 +9,8 @@ import os, sys
 import argparse
 
 from game import manualGame, dqnGame, replay
+from sarsa.sarsaTrain import sarsaTrainer
+from sarsa.sarsaRun import sarsaRunner
 
 # Load in desired paths
 sys.path.append('.')
@@ -32,7 +34,13 @@ def main():
 
     args = parse_args()
 
-    if args.mode == 'dqn':
+    if args.mode == 'sarsaTrain':
+        agent = sarsaTrainer() 
+        agent.train()
+    elif args.mode == 'sarsaRun':
+        agent = sarsaRunner() 
+        agent.run()
+    elif args.mode == 'dqn':
         dqnGame.train()
     elif args.mode == 'replay':
         replay.main()
