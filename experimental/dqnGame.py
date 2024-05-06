@@ -1,13 +1,15 @@
 """
-File: agent.py
-Description: Contains all classes of intelligent agents
+File: dqnGame.py
+Description: Contains executable code for training a DQN instance of Flappy Bird
 Modified By: Kevin Lizarazu
 Date: 04/21/2024
 """
 import torch
 import random
 import numpy as np
-import math
+import wandb
+import gymnasium as gym
+import flappy_bird_gymnasium
 
 from collections import deque
 
@@ -46,6 +48,8 @@ PIPE_GAP = conf["GAME"]["PIPE_GAP"]
 RAND_UPPER = conf["GAME"]["RAND_UPPER"]
 RAND_LOWER = conf["GAME"]["RAND_LOWER"]
 
+
+
 class DQNAgent():
     def __init__(self):
         self.game_counter = 0
@@ -53,15 +57,20 @@ class DQNAgent():
         self.gamma = GAMMA
         self.lr = LEARNING_RATE
         self.memory = deque(maxlen=MAX_MEMORY)
-        self.model = LinearDQN(8, 256, 2)
+        self.model = LinearDQN(8, 64, 64, 2)
         self.trainer = QTrainer(self.model, self.lr, self.gamma)
+        wandb.init(project='FlappyBird', config={
+            "learning_rate": self.lr, "epochs": EPISODES, "batch_size": BATCH_SIZE
+        })
+
+        wandb.watch(self.model, log='all', log_freq=10)
     
     # Retrieves current state of observations
     # [player y-position, player y-velocity,
     #  dist to pipe, bot pipe y-position, top pipe y-position,
     #  dist to next pipe, next bot pipe y-position, next top pipe y-position]
     def get_state(self, game):
-        state = [-1, -1, WIDTH, HEIGHT//2, HEIGHT//2, WIDTH, HEIGHT//2, HEIGHT//2]
+        state = [-1, -1, WIDTH//2, (HEIGHT - FLOOR_H)//2 + PIPE_GAP, (HEIGHT - FLOOR_H)//2 - PIPE_GAP, WIDTH//2, (HEIGHT - FLOOR_H)//2 + PIPE_GAP, (HEIGHT - FLOOR_H)//2 - PIPE_GAP]
 
         # player stuff
         state[0] = game.player.rect.y
@@ -70,14 +79,14 @@ class DQNAgent():
         # pipe stuff
         if len(game.pipes) == 2:
             state[2] = game.pipes[0].rect.x - game.player.rect.x
-            state[3] = game.pipes[0].rect.y
-            state[4] = game.pipes[1].rect.bottom
+            state[3] = game.pipes[0].rect.y - game.player.rect.y
+            state[4] = game.pipes[1].rect.bottom - game.player.rect.y
         if len(game.pipes) == 4:
             state[5] = game.pipes[2].rect.x - game.player.rect.x
-            state[6] = game.pipes[2].rect.y
-            state[7] = game.pipes[3].rect.bottom
+            state[6] = game.pipes[2].rect.y - game.player.rect.y
+            state[7] = game.pipes[3].rect.bottom - game.player.rect.y
 
-        return np.array(state, dtype=int)
+        return np.array(tuple(state), dtype=int)
 
     # Past state information saved for future reference
     def remember(self, state, action, rew, next_state, done):
@@ -104,9 +113,10 @@ class DQNAgent():
         action = [0, 0]
 
         # exploration vs exploitation
-        self.epsilon = 100 - self.game_counter
-        if random.randint(0, 300) < self.epsilon:
-            idx = random.randint(0, 1)
+        self.epsilon = 400 - self.game_counter
+        if random.randint(0, 400) < self.epsilon:
+            idx = random.choice([1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0])
+            # idx = random.randint(0, 1)
         else:
             pred_actions = self.model(torch.tensor(state, dtype=torch.float))
             idx = torch.argmax(pred_actions).item()
@@ -137,33 +147,42 @@ def train():
         FPS
     )
 
-    # training loop
-    while True:
-        # get current state and take single game step with action
+    for ep in range(EPISODES):
+        game.reset()
         curr_state = agent.get_state(game)
-        action = agent.get_action(curr_state)
-        rew, done, score =  game.play_step(action)
+        agent.game_counter += 1
+        cum_reward = 0
 
-        # get new state and update model
-        next_state = agent.get_state(game)
-        agent.remember(curr_state, action, rew, next_state, done)
-        agent.train_short_mem(curr_state, action, rew, next_state, done)
 
-        # flappy bird collided, sample remembered states and update model
-        if done:
-            game.reset()
-            agent.game_counter += 1
-            agent.train_long_mem()
+        # training loop
+        while True:
+            # get current state and take single game step with action
+            
+            action = agent.get_action(curr_state)
+            rew, done, score =  game.play_step(action)
+            cum_reward += rew
 
-            # save model if new high score is achieved
-            if high_score < score:
-                high_score = score
-                agent.model.save()
+            # get new state and update model
+            next_state = agent.get_state(game)
+            agent.remember(curr_state, action, rew, next_state, done)
+            agent.train_short_mem(curr_state, action, rew, next_state, done)
 
-            print(f"Game: {agent.game_counter}, Score: {score}, Highest Score: {high_score}")
+            curr_state = next_state
+
+            # flappy bird collided, sample remembered states and update model
+            if done:
+                agent.train_long_mem()
+
+                # save model if new high score is achieved
+                if high_score < score:
+                    high_score = score
+                    agent.model.save()
+            
+            # plotting business (game score and average game scores)
+                wandb.log({'reward': cum_reward, 'score': game.score, 'episode': agent.game_counter})
+                break
         
-        # plotting business (game score and average game scores)
-
 
 if __name__ == "__main__":
-    train()
+    # train()
+    train2()

@@ -2,3 +2,8 @@ game/__pycache__/
 .idea/
 run_sessions/2024*
 .ipynb_checkpoints/
+wandb
+classes.dot
+sarsa/__pycache__
+q_learning/__pycache__
+dqn/__pycache__

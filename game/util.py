@@ -48,7 +48,6 @@ def load_env_sprites(w_width, w_height):
     return anchors, sprites
 
 
-
 # Loads information about JSON file here
 def load_json(filename):
     with open(filename) as f:
@@ -61,5 +60,5 @@ def load_json(filename):
 def save_json(play_record, filename=None):
     if not filename:
         filename = datetime.now().strftime("%Y%m%d%H%M%S.json")
-    with open("run_sessions/" + filename, "w") as f:
+    with open("./manual_run_sessions/" + filename, "w") as f:
         json.dump(play_record, f)

@@ -12,16 +12,19 @@ import os
 
 # DQN Linear Model
 class LinearDQN(nn.Module):
-    def __init__(self, input_shape, hidden_shape, output_shape):
+    def __init__(self, input_shape, hidden_1, hidden_2, output_shape):
         super().__init__()
-        self.layer1 = nn.Linear(input_shape, hidden_shape)
-        self.layer2 = nn.Linear(hidden_shape, output_shape)
+        self.layer1 = nn.Linear(input_shape, hidden_1)
+        self.layer2 = nn.Linear(hidden_1, hidden_2)
+        self.layer3 = nn.Linear(hidden_2, output_shape)
         self.device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+
     
     # Necessary forward-feeding functino for DQN linear models
     def forward(self, x):
         x = F.relu(self.layer1(x))
-        x = self.layer2(x)
+        x = F.relu(self.layer2(x))
+        x = self.layer3(x)
         return x
     
     # Saving model for inference

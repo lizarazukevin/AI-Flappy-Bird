@@ -1,15 +1,15 @@
 {
   "GRAPHICS": true,
   "SAVE_DIR": "test.json",
-  "LOAD_DIR": "run_sessions/test.json",
+  "LOAD_DIR": "manual_run_sessions/test.json",
 
   "RL": {
-    "EPISODES": 10000,
-    "LEARNING_RATE": 0.003,
-    "GAMMA": 0.7,
-    "EPSILON": 0,
+    "EPISODES": 50000,
+    "LEARNING_RATE": 0.01,
+    "GAMMA": 1,
+    "EPSILON": 0.5,
     "MAX_MEMORY": 100000,
-    "BATCH_SIZE": 1000
+    "BATCH_SIZE": 10
   },
   "GAME": {
     "WIDTH": 432,

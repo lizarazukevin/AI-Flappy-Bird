@@ -37,6 +37,8 @@ RAND_UPPER = conf["GAME"]["RAND_UPPER"]
 RAND_LOWER = conf["GAME"]["RAND_LOWER"]
 
 def main():
+    print("Playing Manual Flappy Bird...")
+
     # game env created
     game = ManualGame(
         (WIDTH, HEIGHT),
@@ -87,7 +89,7 @@ def main():
             inputs.append([action, fps_count])
     
     # game exits, save for replay
-    save_json(rec, conf["SAVE_DIR"])
+    save_json(rec)
     quit()
     
 

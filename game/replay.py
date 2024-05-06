@@ -38,6 +38,7 @@ RAND_UPPER = conf["GAME"]["RAND_UPPER"]
 RAND_LOWER = conf["GAME"]["RAND_LOWER"]
 
 def main():
+    print(f"Replaying Game: {conf['LOAD_DIR']}")
     # load desired session
     data = load_json(conf["LOAD_DIR"])
     random.seed(data["random_seed"])
