@@ -1,7 +1,7 @@
 """
 File: cnn_dqn_run.py
 Description: Uses trained model to play a game
-Modified By: Kevin Lizarazu
+Modified By: Siri Namala
 Date: 04/21/2024
 """
 import gymnasium

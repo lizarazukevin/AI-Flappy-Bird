@@ -1,7 +1,7 @@
 """
 File: cnn_dqn_train.py
 Description: CNN variant of DQN learning trains agent on array of game states
-Modified By: Kevin Lizarazu
+Modified By: Siri Namala
 Date: 04/21/2024
 """
 import random

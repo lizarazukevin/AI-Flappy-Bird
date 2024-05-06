@@ -123,7 +123,7 @@ class sarsaTrainer:
         print("Training Flappy Bird with SARSA...")
 
         # Training loop
-        num_episodes =   1000
+        num_episodes =   5000
         highest_score = 0
         total_score = 0  # Total score accumulator
         for episode in range(num_episodes):
