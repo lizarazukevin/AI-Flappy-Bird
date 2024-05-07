@@ -73,6 +73,15 @@ To run a trained model:
 python main.py --mode dqn --run
 ```
 
+To train the second DQN model:
+```
+python3.9 dqnFlappyBird.py train
+```
+To run a trained model:
+```
+python3.9 dqnFlappyBird.py test
+```
+
 ### Manual Game Mode
 
 A custom game environment was created to replicate the Flappy Bird game, you can play this game by simply setting the mode as 'manual'. Each run is recorded and has the ability to replay the past manual game run. All configurations are found on _config.json_
